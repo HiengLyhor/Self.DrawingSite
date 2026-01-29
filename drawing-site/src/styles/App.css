@@ -1,0 +1,76 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The container for the bubble */
+.message-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+/* The Timestamp (Hidden by default) */
+.message-bubble::after {
+  content: attr(data-time);
+  /* Pulls time from the attribute */
+  position: absolute;
+  bottom: -18px;
+  font-size: 10px;
+  color: #888;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Show timestamp on hover */
+.message-bubble:hover::after {
+  opacity: 1;
+}
+
+/* Align timestamp for ME (right) */
+.bubble-me::after {
+  right: 5px;
+}
+
+/* Align timestamp for OTHERS (left) */
+.bubble-other::after {
+  left: 5px;
+}
