@@ -22,8 +22,8 @@ export default function ShareWidget({ roomId, excalidrawApi, isOpen, onToggle })
                 appState: excalidrawApi.getAppState(),
             };
 
-            // const code = await socketService.shareDrawing(drawingData, roomId);
-            const code = "ABEF96EC";
+            const code = await socketService.shareDrawing(drawingData, roomId);
+            // const code = "ABEF96EC";
             setShareCode(code);
 
             onToggle();

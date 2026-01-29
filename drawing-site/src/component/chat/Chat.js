@@ -3,7 +3,7 @@ import { MessageBubble } from "./MessageBubble";
 import { UtilFunctions } from "../../utils/UtilFunctions";
 import { styles } from "../../styles/ChatStyle";
 
-export default function Chat({ roomId, onClose }) {
+export default function Chat({ roomId, onClose, username, color }) {
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -40,9 +40,12 @@ export default function Chat({ roomId, onClose }) {
             id: UtilFunctions.generateId(),
             text: input,
             sender: "me",
-            name: "Me",
+            name: username,
             timestamp: UtilFunctions.getCurrentTime(),
         };
+
+        console.debug(newMessage);
+        console.debug(color);
 
         setMessages([...messages, newMessage]);
         setInput("");
