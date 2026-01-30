@@ -1,6 +1,5 @@
 const animals = ["Panda", "Fox", "Koala", "Tiger", "Rabbit", "Dolphin", "Penguin", "Otter", "Elephant"];
 const adjectives = ["Creative", "Swift", "Quiet", "Bright", "Happy", "Clever", "brave", "Zen"];
-
 const colors = ["#4f46e5", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6"];
 
 export const UtilFunctions = {
@@ -34,6 +33,10 @@ export const UtilFunctions = {
             .padStart(6, '0');
     },
 
+    /**
+     * Generates a random username for each user
+     * @returns {string}
+     */
     getOrGenerateIdentity: () => {
         const savedName = localStorage.getItem("excalidraw_user_name");
 
@@ -47,6 +50,10 @@ export const UtilFunctions = {
         return newName;
     },
 
+    /**
+     * Generates a random user color for each user
+     * @returns {string}
+     */
     getRandomColor: () => {
         
         const savedColor = localStorage.getItem("excalidraw_color");
