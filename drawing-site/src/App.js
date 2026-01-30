@@ -4,18 +4,25 @@ import ChatWidget from "./component/chat/ChatWidget";
 import ShareWidget from "./component/share/ShareWidget";
 import { styles } from "./styles/ChatStyle";
 import { UtilFunctions } from "./utils/UtilFunctions";
+import { socketService } from "./utils/SocketService";
+import ToastContainer from "./component/ui/ToastContainer";
 import './styles/App.css';
 
 export default function App() {
+  // --- REFS & STATE ---
   const [excalidrawApi, setExcalidrawApi] = useState(null);
+  const [isCollaborating, setIsCollaborating] = useState(false);
   const [activeWidget, setActiveWidget] = useState(null);
+  const [activeRoomId, setActiveRoomId] = useState(null);
+
+  const isInitialSyncDone = useRef(true);
   const saveTimeout = useRef(null);
 
-  // 1. Identity & Room Setup
-  const roomId = useMemo(() => {
+  // --- IDENTITY & ROOM SETUP ---
+  const { roomId, roomName } = useMemo(() => {
     const id = localStorage.getItem("roomId") ?? UtilFunctions.generateRoomId();
     localStorage.setItem("roomId", id);
-    return id;
+    return { roomId: id, roomName: UtilFunctions.getRoomName(id) };
   }, []);
 
   const user = useMemo(() => ({
@@ -25,7 +32,7 @@ export default function App() {
 
   const storageKey = `excalidraw-room-${roomId}`;
 
-  // 2. Initial Data Loading
+  // --- INITIAL DATA LOADING ---
   const initialData = useMemo(() => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -35,23 +42,58 @@ export default function App() {
     }
   }, [storageKey]);
 
-  // 3. Update Collaborators
-  useEffect(() => {
+  // --- COLLABORATION HANDLERS ---
+  const startCollaboration = useCallback((joinId) => {
     if (!excalidrawApi) return;
 
-    excalidrawApi.updateScene({
-      appState: {
-        collaborators: new Map([
-          ["local", { username: user.name, color: user.color }]
-        ]),
-      },
+    const targetRoomId = joinId || roomId;
+    setActiveRoomId(targetRoomId);
+
+    // If I'm the owner (no joinId), I'm ready. 
+    // If I'm joining, I wait for the owner's data to unlock.
+    isInitialSyncDone.current = !joinId;
+
+    socketService.connect(targetRoomId);
+    setIsCollaborating(true);
+
+    // OWNER: Always listen and respond
+    socketService.onLoadRequest(() => {
+      console.log("Owner: Pushing latest state to room...");
+      const state = {
+        elements: excalidrawApi.getSceneElements(),
+        appState: excalidrawApi.getAppState(),
+        files: excalidrawApi.getFiles(),
+      };
+      socketService.sendCurrentState(state, targetRoomId);
     });
-  }, [excalidrawApi, user]);
 
-  // 4. Persistence Logic
+    // JOINER: Unlock the board when state arrives
+    socketService.onReceiveInitialState((incoming) => {
+      console.log("Joiner: State received, unlocking edits.");
+      isInitialSyncDone.current = true; // THIS UNLOCKS EDITING
+
+      excalidrawApi.updateScene({
+        elements: incoming.elements,
+        appState: {
+          ...incoming.appState,
+          collaborators: new Map([["local", { username: user.name, color: user.color }]])
+        },
+        files: incoming.files,
+      });
+    });
+
+    socketService.onDrawingUpdate((remoteElements) => {
+      excalidrawApi.updateScene({
+        elements: remoteElements,
+        commitToHistory: false,
+      });
+    });
+  }, [excalidrawApi, roomId, user]);
+
+  // --- MAIN CHANGE HANDLER ---
   const handleChange = useCallback((elements, appState, files) => {
+    // 1. Auto-save to LocalStorage
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
-
     saveTimeout.current = setTimeout(() => {
       const persistableData = {
         elements,
@@ -64,7 +106,37 @@ export default function App() {
       };
       localStorage.setItem(storageKey, JSON.stringify(persistableData));
     }, 300);
-  }, [storageKey]);
+
+    // 2. Collaboration Broadcast
+    const isLocalMutation = appState.editingElement || appState.draggingElement ||
+      appState.resizingElement || appState.selectionElement;
+
+    if (isCollaborating && activeRoomId && isLocalMutation) {
+      if (isInitialSyncDone.current) {
+        socketService.broadcastScene(elements, activeRoomId);
+      } else {
+        console.warn("Broadcast blocked: Waiting for initial sync from owner.");
+      }
+    }
+  }, [isCollaborating, activeRoomId, storageKey]);
+
+  // --- LIFECYCLE ---
+  useEffect(() => {
+    return () => {
+      if (isCollaborating) socketService.disconnect();
+    };
+  }, [isCollaborating]);
+
+  // Initialize collaborators on API load
+  useEffect(() => {
+    if (excalidrawApi) {
+      excalidrawApi.updateScene({
+        appState: {
+          collaborators: new Map([["local", { username: user.name, color: user.color }]]),
+        },
+      });
+    }
+  }, [excalidrawApi, user]);
 
   const toggleWidget = (name) => setActiveWidget(prev => (prev === name ? null : name));
 
@@ -82,15 +154,17 @@ export default function App() {
           excalidrawApi={excalidrawApi}
           isOpen={activeWidget === 'share'}
           onToggle={() => toggleWidget('share')}
+          onStartCollab={startCollaboration}
         />
         <ChatWidget
-          roomId={roomId}
+          roomName={roomName}
           username={user.name}
           color={user.color}
           isOpen={activeWidget === 'chat'}
           onToggle={() => toggleWidget('chat')}
         />
       </div>
+      <ToastContainer />
     </div>
   );
 }

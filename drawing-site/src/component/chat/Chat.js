@@ -3,7 +3,7 @@ import { MessageBubble } from "./MessageBubble";
 import { UtilFunctions } from "../../utils/UtilFunctions";
 import { styles } from "../../styles/ChatStyle";
 
-export default function Chat({ roomId, onClose, username, color }) {
+export default function Chat({ roomName, onClose, username, color }) {
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -56,8 +56,8 @@ export default function Chat({ roomId, onClose, username, color }) {
             {/* Header */}
             <div style={styles.header}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={styles.avatar}>{roomId?.[0] || "R"}</div>
-                    <strong>Room: {roomId}</strong>
+                    <div style={styles.avatar}>{roomName?.[0] || "R"}</div>
+                    <strong>Room: {roomName}</strong>
                 </div>
                 <button onClick={onClose} style={styles.closeBtn}>✕</button>
             </div>

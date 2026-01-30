@@ -2,7 +2,7 @@ import { useState } from "react";
 import Chat from "./Chat";
 import { styles } from "../../styles/ChatStyle";
 
-export default function ChatWidget({ roomId, isOpen, onToggle, username, color }) {
+export default function ChatWidget({ roomName, isOpen, onToggle, username, color }) {
     const [unreadCount, setUnreadCount] = useState(3);
 
     const handleChatToggle = () => {
@@ -35,7 +35,7 @@ export default function ChatWidget({ roomId, isOpen, onToggle, username, color }
                         transformOrigin: "bottom right" // Animation starts from the button corner
                     }}
                 >
-                    <Chat roomId={roomId} onClose={onToggle} username={username} color={color} />
+                    <Chat roomName={roomName} onClose={onToggle} username={username} color={color} />
                 </div>
             )}
         </>

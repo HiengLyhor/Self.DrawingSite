@@ -2,6 +2,9 @@ const animals = ["Panda", "Fox", "Koala", "Tiger", "Rabbit", "Dolphin", "Penguin
 const adjectives = ["Creative", "Swift", "Quiet", "Bright", "Happy", "Clever", "brave", "Zen"];
 const colors = ["#4f46e5", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6"];
 
+const adjectivesRoom = ["Golden", "Creative", "Swift", "Infinite", "Cozy", "Digital"];
+const nouns = ["Canvas", "Whiteboard", "Studio", "Room", "Draft", "Space"];
+
 export const UtilFunctions = {
     /**
      * Returns the current time in a human-readable format (e.g., "3:45 PM")
@@ -55,14 +58,31 @@ export const UtilFunctions = {
      * @returns {string}
      */
     getRandomColor: () => {
-        
+
         const savedColor = localStorage.getItem("excalidraw_color");
 
         if (savedColor) return savedColor;
 
-        const colorResult =  colors[Math.floor(Math.random() * colors.length)];
+        const colorResult = colors[Math.floor(Math.random() * colors.length)];
         localStorage.setItem("excalidraw_color", colorResult);
 
         return colorResult;
+    },
+
+    getRoomName: (roomId) => {
+        const charSum = roomId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+        const adj = adjectivesRoom[charSum % adjectivesRoom.length];
+        const noun = nouns[charSum % nouns.length];
+        const number = (charSum % 10) + 1;
+
+        return `${adj} ${noun} ${number}`;
+    },
+
+    showToast(message, type = "success") {
+        const event = new CustomEvent("SHOW_TOAST", {
+            detail: { message, type }
+        });
+        window.dispatchEvent(event);
     }
 };
